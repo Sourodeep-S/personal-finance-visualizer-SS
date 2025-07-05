@@ -1,103 +1,466 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useEffect } from "react";
+import { generateColor } from "@/lib/colors";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
+import {
+  transactions as initialTransactions,
+  Transaction,
+  categories as initialCategories,
+} from "@/lib/data";
+import { budgets as initialBudgets, Budget } from "@/lib/budget";
+import { AddTransactionForm } from "@/components/add-transaction-form";
+import { EditTransactionForm } from "@/components/edit-transaction-form";
+import { SetBudgetForm } from "@/components/set-budget-form";
+import { AddCategoryForm } from "@/components/add-category-form";
+import { AlertTriangle } from "lucide-react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
+
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [isClient, setIsClient] = useState(false);
+  const [openAdd, setOpenAdd] = useState(false);
+  const [openEdit, setOpenEdit] = useState<string | null>(null);
+  const [openSetBudget, setOpenSetBudget] = useState(false);
+  const [openAddCategory, setOpenAddCategory] = useState(false);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  useEffect(() => {
+    setIsClient(true);
+    const storedTransactions = localStorage.getItem("transactions");
+    if (storedTransactions) {
+      setTransactions(
+        JSON.parse(storedTransactions, (key, value) => {
+          if (key === "date") return new Date(value);
+          return value;
+        })
+      );
+    } else {
+      setTransactions(initialTransactions);
+    }
+
+    const storedBudgets = localStorage.getItem("budgets");
+    if (storedBudgets) {
+      setBudgets(JSON.parse(storedBudgets));
+    } else {
+      setBudgets(initialBudgets);
+    }
+
+    const storedCategories = localStorage.getItem("categories");
+    if (storedCategories) {
+      setCategories(JSON.parse(storedCategories));
+    } else {
+      setCategories(initialCategories);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isClient) {
+      localStorage.setItem("transactions", JSON.stringify(transactions));
+    }
+  }, [transactions, isClient]);
+
+  useEffect(() => {
+    if (isClient) {
+      localStorage.setItem("budgets", JSON.stringify(budgets));
+    }
+  }, [budgets, isClient]);
+
+  useEffect(() => {
+    if (isClient) {
+      localStorage.setItem("categories", JSON.stringify(categories));
+    }
+  }, [categories, isClient]);
+
+  const totalIncome = transactions
+    .filter((t) => t.amount > 0)
+    .reduce((acc, curr) => acc + curr.amount, 0);
+
+  const handleAddTransaction = (transaction: Omit<Transaction, "id">) => {
+    const newTransactions = [
+      ...transactions,
+      { ...transaction, id: crypto.randomUUID() },
+    ];
+    setTransactions(newTransactions);
+    setOpenAdd(false);
+  };
+
+  const handleEditTransaction = (transaction: Transaction) => {
+    const newTransactions = transactions.map((t) =>
+      t.id === transaction.id ? transaction : t
+    );
+    setTransactions(newTransactions);
+    setOpenEdit(null);
+  };
+
+  const handleDeleteTransaction = (id: string) => {
+    const newTransactions = transactions.filter((t) => t.id !== id);
+    setTransactions(newTransactions);
+  };
+
+  const handleSetBudget = (category: string, amount: number) => {
+    const existing = budgets.find((b) => b.category === category);
+    if (existing) {
+      const newBudgets = budgets.map((b) =>
+        b.category === category ? { ...b, amount } : b
+      );
+      setBudgets(newBudgets);
+    } else {
+      const newBudgets = [...budgets, { category, amount }];
+      setBudgets(newBudgets);
+    }
+  };
+
+  const handleAddCategory = (name: string) => {
+    const newCategories = [...categories, name];
+    setCategories(newCategories);
+    setOpenAddCategory(false);
+  };
+
+  const monthlyExpenses =
+    isClient && transactions.length > 0
+      ? Object.values(
+        transactions
+          .filter((t) => t.amount < 0)
+          .reduce((acc, t) => {
+            const month = t.date.toLocaleString("default", {
+              month: "long",
+            });
+            if (!acc[month]) {
+              acc[month] = { month };
+            }
+            if (!acc[month][t.category]) {
+              acc[month][t.category] = 0;
+            }
+            acc[month][t.category] += Math.abs(t.amount);
+            return acc;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          }, {} as { [key: string]: { month: string;[key: string]: any } })
+      )
+      : [];
+
+  const categoryExpenses =
+    isClient && transactions.length > 0
+      ? transactions
+        .filter((t) => t.amount < 0)
+        .reduce((acc, t) => {
+          const existing = acc.find((e) => e.name === t.category);
+          if (existing) {
+            existing.value += Math.abs(t.amount);
+          } else {
+            acc.push({ name: t.category, value: Math.abs(t.amount) });
+          }
+          return acc;
+        }, [] as { name: string; value: number }[])
+      : [];
+
+  const totalExpenses = categoryExpenses.reduce(
+    (acc, curr) => acc + curr.value,
+    0
+  );
+
+  const recentTransactions =
+    isClient && transactions.length > 0
+      ? transactions
+        .slice()
+        .sort((a, b) => b.date.getTime() - a.date.getTime())
+        .slice(0, 5)
+      : [];
+
+  const budgetStatus =
+    isClient && budgets.length > 0
+      ? budgets.map((budget) => {
+        const expense =
+          categoryExpenses.find((e) => e.name === budget.category)?.value ||
+          0;
+        return {
+          ...budget,
+          expense,
+          progress: (expense / budget.amount) * 100,
+          color: generateColor(budget.category),
+        };
+      })
+      : [];
+
+  return (
+    <main className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">Personal Finance Visualizer</h1>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold">Overview</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <span className="text-lg">Total Expenses</span>
+              <span className="text-2xl font-bold text-red-600">
+                ₹{totalExpenses.toFixed(2)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-lg">Total Income</span>
+              <span className="text-2xl font-bold text-green-600">
+                ₹{totalIncome.toFixed(2)}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Category Breakdown</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={150}>
+              <PieChart>
+                <Pie
+                  data={categoryExpenses}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  outerRadius={60}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {categoryExpenses.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={generateColor(entry.name)}
+                    />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+        <Card className="rounded-2xl shadow-md border border-border">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold">Recent Transactions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="flex flex-col gap-1">
+              {recentTransactions.map((t) => (
+                <li
+                  key={t.id}
+                  className="flex justify-between items-center p-2 rounded-md hover:bg-muted transition-colors"
+                >
+                  <span className="text-base text-muted-foreground">{t.description}</span>
+                  <span
+                    className={`text-base font-medium ${t.amount < 0 ? 'text-red-600' : 'text-green-600'
+                      }`}
+                  >
+                    ₹{Math.abs(t.amount).toFixed(2)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Transactions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-2">
+              <Dialog open={openAdd} onOpenChange={setOpenAdd}>
+                <DialogTrigger asChild>
+                  <Button className="mb-4">Add Transaction</Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Add Transaction</DialogTitle>
+                  </DialogHeader>
+                  <AddTransactionForm
+                    onAddTransaction={handleAddTransaction}
+                    categories={categories}
+                  />
+                </DialogContent>
+              </Dialog>
+              <Dialog open={openSetBudget} onOpenChange={setOpenSetBudget}>
+                <DialogTrigger asChild>
+                  <Button className="mb-4" variant="outline">
+                    Set Budgets
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Set Budgets</DialogTitle>
+                  </DialogHeader>
+                  <SetBudgetForm
+                    budgets={budgets}
+                    onSetBudget={handleSetBudget}
+                    categories={categories}
+                  />
+                </DialogContent>
+              </Dialog>
+              <Dialog open={openAddCategory} onOpenChange={setOpenAddCategory}>
+                <DialogTrigger asChild>
+                  <Button className="mb-4" variant="outline">
+                    Add Category
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Add Category</DialogTitle>
+                  </DialogHeader>
+                  <AddCategoryForm onAddCategory={handleAddCategory} />
+                </DialogContent>
+              </Dialog>
+            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {transactions.map((t) => (
+                  <TableRow key={t.id}>
+                    <TableCell>
+                      {isClient ? t.date.toLocaleDateString() : ""}
+                    </TableCell>
+                    <TableCell>{t.description}</TableCell>
+                    <TableCell>{t.category}</TableCell>
+                    <TableCell className="text-right">
+                      {t.amount.toFixed(2)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Dialog
+                        open={openEdit === t.id}
+                        onOpenChange={(isOpen) =>
+                          setOpenEdit(isOpen ? t.id : null)
+                        }
+                      >
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="sm" className="mr-2">
+                            Edit
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Edit Transaction</DialogTitle>
+                          </DialogHeader>
+                          <EditTransactionForm
+                            transaction={t}
+                            onEditTransaction={handleEditTransaction}
+                            categories={categories}
+                          />
+                        </DialogContent>
+                      </Dialog>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleDeleteTransaction(t.id)}
+                      >
+                        Delete
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+        <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Monthly Expenses</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={monthlyExpenses}>
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  {categories.map((category) => (
+                    <Bar
+                      key={category}
+                      dataKey={category}
+                      stackId="a"
+                      fill={generateColor(category)}
+                    />
+                  ))}
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Budget vs. Actual</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {budgetStatus &&
+                  budgetStatus.map((b) => (
+                    <div key={b.category}>
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center">
+                          <span>{b.category}</span>
+                          {b.progress > 100 && (
+                            <AlertTriangle className="w-4 h-4 ml-2 text-red-500" />
+                          )}
+                        </div>
+                        <span>
+                          ₹{b.expense.toFixed(2)} / ₹{b.amount.toFixed(2)}
+                        </span>
+                      </div>
+                      <Progress
+                        value={b.progress}
+                        style={{
+                          backgroundColor: generateColor(b.category),
+                        }}
+                      />
+                    </div>
+                  ))}
+              </div>
+            </CardContent>
+          </Card>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      </div>
+    </main>
   );
 }
