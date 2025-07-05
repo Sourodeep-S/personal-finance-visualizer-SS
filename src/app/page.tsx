@@ -295,15 +295,17 @@ export default function Home() {
 
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card>
+        <Card className="rounded-2xl shadow-md border border-border">
           <CardHeader>
-            <CardTitle>Transactions</CardTitle>
+            <CardTitle className="text-xl font-semibold">Transactions</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-3 mb-6">
               <Dialog open={openAdd} onOpenChange={setOpenAdd}>
                 <DialogTrigger asChild>
-                  <Button className="mb-4">Add Transaction</Button>
+                  <Button className="bg-green-600 hover:bg-green-700 text-white">
+                    Add Transaction
+                  </Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
@@ -315,9 +317,10 @@ export default function Home() {
                   />
                 </DialogContent>
               </Dialog>
+
               <Dialog open={openSetBudget} onOpenChange={setOpenSetBudget}>
                 <DialogTrigger asChild>
-                  <Button className="mb-4" variant="outline">
+                  <Button className="bg-blue-100 text-blue-800 hover:bg-blue-200">
                     Set Budgets
                   </Button>
                 </DialogTrigger>
@@ -332,9 +335,10 @@ export default function Home() {
                   />
                 </DialogContent>
               </Dialog>
+
               <Dialog open={openAddCategory} onOpenChange={setOpenAddCategory}>
                 <DialogTrigger asChild>
-                  <Button className="mb-4" variant="outline">
+                  <Button className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200">
                     Add Category
                   </Button>
                 </DialogTrigger>
@@ -346,33 +350,33 @@ export default function Home() {
                 </DialogContent>
               </Dialog>
             </div>
-            <Table>
-              <TableHeader>
+
+            <Table className="rounded-lg overflow-hidden border">
+              <TableHeader className="bg-muted">
                 <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="text-muted-foreground">Date</TableHead>
+                  <TableHead className="text-muted-foreground">Description</TableHead>
+                  <TableHead className="text-muted-foreground">Category</TableHead>
+                  <TableHead className="text-right text-muted-foreground">Amount</TableHead>
+                  <TableHead className="text-right text-muted-foreground">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {transactions.map((t) => (
                   <TableRow key={t.id}>
-                    <TableCell>
-                      {isClient ? t.date.toLocaleDateString() : ""}
-                    </TableCell>
+                    <TableCell>{isClient ? t.date.toLocaleDateString() : ""}</TableCell>
                     <TableCell>{t.description}</TableCell>
                     <TableCell>{t.category}</TableCell>
-                    <TableCell className="text-right">
-                      {t.amount.toFixed(2)}
+                    <TableCell
+                      className={`text-right font-medium ${t.amount < 0 ? 'text-red-600' : 'text-green-600'
+                        }`}
+                    >
+                      ₹{Math.abs(t.amount).toFixed(2)}
                     </TableCell>
                     <TableCell className="text-right">
                       <Dialog
                         open={openEdit === t.id}
-                        onOpenChange={(isOpen) =>
-                          setOpenEdit(isOpen ? t.id : null)
-                        }
+                        onOpenChange={(isOpen) => setOpenEdit(isOpen ? t.id : null)}
                       >
                         <DialogTrigger asChild>
                           <Button variant="outline" size="sm" className="mr-2">
@@ -404,6 +408,7 @@ export default function Home() {
             </Table>
           </CardContent>
         </Card>
+
         <div className="space-y-4">
           <Card>
             <CardHeader>
