@@ -1,5 +1,7 @@
 "use client";
 
+//import { motion } from "framer-motion"
+
 import { useState, useEffect } from "react";
 import { generateColor } from "@/lib/colors";
 import {
@@ -241,32 +243,62 @@ export default function Home() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="rounded-2xl shadow-md border border-border">
           <CardHeader>
-            <CardTitle>Category Breakdown</CardTitle>
+            <CardTitle className="text-xl font-semibold">Category Breakdown</CardTitle>
           </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={150}>
-              <PieChart>
-                <Pie
-                  data={categoryExpenses}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  outerRadius={60}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {categoryExpenses.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={generateColor(entry.name)}
+          <CardContent className="flex flex-col items-center justify-center">
+            {categoryExpenses.length > 0 ? (
+              <>
+                <ResponsiveContainer width="100%" height={240}>
+                  <PieChart>
+                    <Pie
+                      data={categoryExpenses}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={40}
+                      outerRadius={80}
+                      paddingAngle={5}
+                      dataKey="value"
+                      label={({ name, percent }) =>
+                        `${name}: ${(percent! * 100).toFixed(0)}%`
+                      }
+                      isAnimationActive={true}
+                      animationDuration={500}
+                    >
+                      {categoryExpenses.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={generateColor(entry.name)}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        borderRadius: '8px',
+                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                      }}
+                      formatter={(value: number, name: string) => [`₹${value.toFixed(2)}`, name]}
                     />
+                  </PieChart>
+                </ResponsiveContainer>
+
+                {/* Custom Legend */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-6 w-full px-4">
+                  {categoryExpenses.map((entry, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: generateColor(entry.name) }}
+                      />
+                      <span className="text-sm text-muted-foreground">{entry.name}</span>
+                    </div>
                   ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+                </div>
+              </>
+            ) : (
+              <p className="text-muted-foreground text-sm">No category data available</p>
+            )}
           </CardContent>
         </Card>
         <Card className="rounded-2xl shadow-md border border-border">
