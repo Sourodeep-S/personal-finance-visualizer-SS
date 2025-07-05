@@ -8,7 +8,7 @@ export type Transaction = {
 
 export const categories = [
   "Groceries",
-  "Salary",
+  "Income",
   "Coffee",
   "Dinner",
   "Transport",
