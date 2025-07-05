@@ -20,7 +20,7 @@ export const transactions: Transaction[] = [
     id: "1",
     amount: -50.0,
     date: new Date("2024-07-01"),
-    description: "Groceries",
+    description: "Shopping",
     category: "Groceries",
   },
   {
@@ -28,13 +28,13 @@ export const transactions: Transaction[] = [
     amount: 2000.0,
     date: new Date("2024-07-01"),
     description: "Salary",
-    category: "Salary",
+    category: "Income",
   },
   {
     id: "3",
     amount: -25.0,
     date: new Date("2024-07-02"),
-    description: "Coffee",
+    description: "Starbucks",
     category: "Coffee",
   },
   {
