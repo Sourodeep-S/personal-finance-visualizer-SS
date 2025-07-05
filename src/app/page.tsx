@@ -1,6 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion"
+import { useRef } from "react";
+import { motion, useInView } from "framer-motion";
+
 
 import { useState, useEffect } from "react";
 import { generateColor } from "@/lib/colors";
@@ -219,295 +221,343 @@ export default function Home() {
       })
       : [];
 
+  const budgetCardRef = useRef(null);
+  const budgetInView = useInView(budgetCardRef, { once: true, amount: 0.3 });
+
+
   return (
     <main className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Personal Finance Visualizer</h1>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold">Overview</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <span className="text-lg">Total Expenses</span>
-              <span className="text-2xl font-bold text-red-600">
-                ₹{totalExpenses.toFixed(2)}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-lg">Total Income</span>
-              <span className="text-2xl font-bold text-green-600">
-                ₹{totalIncome.toFixed(2)}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-2xl shadow-md border border-border">
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold">Category Breakdown</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col items-center justify-center">
-            {categoryExpenses.length > 0 ? (
-              <>
-                <ResponsiveContainer width="100%" height={240}>
-                  <PieChart>
-                    <Pie
-                      data={categoryExpenses}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={40}
-                      outerRadius={80}
-                      paddingAngle={5}
-                      dataKey="value"
-                      label={({ name, percent }) =>
-                        `${name}: ${(percent! * 100).toFixed(0)}%`
-                      }
-                      isAnimationActive={true}
-                      animationDuration={500}
-                    >
-                      {categoryExpenses.map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={generateColor(entry.name)}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{
-                        borderRadius: '8px',
-                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                      }}
-                      formatter={(value: number, name: string) => [`₹${value.toFixed(2)}`, name]}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-
-                {/* Custom Legend */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-6 w-full px-4">
-                  {categoryExpenses.map((entry, index) => (
-                    <div key={index} className="flex items-center gap-2">
-                      <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: generateColor(entry.name) }}
-                      />
-                      <span className="text-sm text-muted-foreground">{entry.name}</span>
-                    </div>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <p className="text-muted-foreground text-sm">No category data available</p>
-            )}
-          </CardContent>
-        </Card>
-        <Card className="rounded-2xl shadow-md border border-border">
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold">Recent Transactions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="flex flex-col gap-1">
-              {recentTransactions.map((t) => (
-                <motion.li
-                  key={t.id}
-                  className="flex justify-between items-center p-2 rounded-md hover:bg-muted transition-colors"
-                  whileHover={{ scale: 1.02 }}
-                  transition={{ type: "spring", stiffness: 300 }}
-                >
-
-                  <span className="text-base text-muted-foreground">{t.description}</span>
-                  <span
-                    className={`text-base font-medium ${t.amount < 0 ? 'text-red-600' : 'text-green-600'
-                      }`}
-                  >
-                    ₹{Math.abs(t.amount).toFixed(2)}
-                  </span>
-                </motion.li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className="rounded-2xl shadow-md border border-border">
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold">Transactions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-3 mb-6">
-              <Dialog open={openAdd} onOpenChange={setOpenAdd}>
-                <DialogTrigger asChild>
-                  <Button className="bg-green-600 hover:bg-green-700 text-white">
-                    Add Transaction
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Add Transaction</DialogTitle>
-                  </DialogHeader>
-                  <AddTransactionForm
-                    onAddTransaction={handleAddTransaction}
-                    categories={categories}
-                  />
-                </DialogContent>
-              </Dialog>
-
-              <Dialog open={openSetBudget} onOpenChange={setOpenSetBudget}>
-                <DialogTrigger asChild>
-                  <Button className="bg-blue-100 text-blue-800 hover:bg-blue-200">
-                    Set Budgets
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Set Budgets</DialogTitle>
-                  </DialogHeader>
-                  <SetBudgetForm
-                    budgets={budgets}
-                    onSetBudget={handleSetBudget}
-                    categories={categories}
-                  />
-                </DialogContent>
-              </Dialog>
-
-              <Dialog open={openAddCategory} onOpenChange={setOpenAddCategory}>
-                <DialogTrigger asChild>
-                  <Button className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200">
-                    Add Category
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Add Category</DialogTitle>
-                  </DialogHeader>
-                  <AddCategoryForm onAddCategory={handleAddCategory} />
-                </DialogContent>
-              </Dialog>
-            </div>
-
-            <Table className="rounded-lg overflow-hidden border">
-              <TableHeader className="bg-muted">
-                <TableRow>
-                  <TableHead className="text-muted-foreground">Date</TableHead>
-                  <TableHead className="text-muted-foreground">Description</TableHead>
-                  <TableHead className="text-muted-foreground">Category</TableHead>
-                  <TableHead className="text-right text-muted-foreground">Amount</TableHead>
-                  <TableHead className="text-right text-muted-foreground">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {transactions.map((t) => (
-                  <motion.tr
-                    key={t.id}
-                    className="transition-transform hover:scale-[1.01] hover:shadow-sm"
-                    whileHover={{ scale: 1.01 }}
-                    transition={{ type: 'spring', stiffness: 250 }}
-                  >
-                    <TableCell>{isClient ? t.date.toLocaleDateString() : ""}</TableCell>
-                    <TableCell>{t.description}</TableCell>
-                    <TableCell>{t.category}</TableCell>
-                    <TableCell
-                      className={`text-right font-medium ${t.amount < 0 ? 'text-red-600' : 'text-green-600'
-                        }`}
-                    >
-                      ₹{Math.abs(t.amount).toFixed(2)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Dialog
-                        open={openEdit === t.id}
-                        onOpenChange={(isOpen) => setOpenEdit(isOpen ? t.id : null)}
-                      >
-                        <DialogTrigger asChild>
-                          <Button variant="outline" size="sm" className="mr-2">
-                            Edit
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Edit Transaction</DialogTitle>
-                          </DialogHeader>
-                          <EditTransactionForm
-                            transaction={t}
-                            onEditTransaction={handleEditTransaction}
-                            categories={categories}
-                          />
-                        </DialogContent>
-                      </Dialog>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDeleteTransaction(t.id)}
-                      >
-                        Delete
-                      </Button>
-                    </TableCell>
-                  </motion.tr>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-
-        <div className="space-y-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
           <Card>
             <CardHeader>
-              <CardTitle>Monthly Expenses</CardTitle>
+              <CardTitle className="text-xl font-semibold">Overview</CardTitle>
             </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={monthlyExpenses}>
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  {categories.map((category) => (
-                    <Bar
-                      key={category}
-                      dataKey={category}
-                      stackId="a"
-                      fill={generateColor(category)}
-                    />
-                  ))}
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Budget vs. Actual</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {budgetStatus &&
-                  budgetStatus.map((b) => (
-                    <div key={b.category}>
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center">
-                          <span>{b.category}</span>
-                          {b.progress > 100 && (
-                            <AlertTriangle className="w-4 h-4 ml-2 text-red-500" />
-                          )}
-                        </div>
-                        <span>
-                          ₹{b.expense.toFixed(2)} / ₹{b.amount.toFixed(2)}
-                        </span>
-                      </div>
-                      <div className="w-full h-2 rounded bg-muted overflow-hidden">
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${Math.min(b.progress, 100)}%` }}
-                          transition={{ duration: 0.8 }}
-                          className="h-2 rounded"
-                          style={{ backgroundColor: generateColor(b.category) }}
-                        />
-                      </div>
-
-                    </div>
-                  ))}
+            <CardContent className="flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <span className="text-lg">Total Expenses</span>
+                <span className="text-2xl font-bold text-red-600">
+                  ₹{totalExpenses.toFixed(2)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-lg">Total Income</span>
+                <span className="text-2xl font-bold text-green-600">
+                  ₹{totalIncome.toFixed(2)}
+                </span>
               </div>
             </CardContent>
           </Card>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+        >
+          <Card className="rounded-2xl shadow-md border border-border">
+            <CardHeader>
+              <CardTitle className="text-xl font-semibold">Category Breakdown</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center justify-center">
+              {categoryExpenses.length > 0 ? (
+                <>
+                  <ResponsiveContainer width="100%" height={240}>
+                    <PieChart>
+                      <Pie
+                        data={categoryExpenses}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={40}
+                        outerRadius={80}
+                        paddingAngle={5}
+                        dataKey="value"
+                        label={({ name, percent }) =>
+                          `${name}: ${(percent! * 100).toFixed(0)}%`
+                        }
+                        isAnimationActive={true}
+                        animationDuration={500}
+                      >
+                        {categoryExpenses.map((entry, index) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={generateColor(entry.name)}
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{
+                          borderRadius: '8px',
+                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                        }}
+                        formatter={(value: number, name: string) => [`₹${value.toFixed(2)}`, name]}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+
+                  {/* Custom Legend */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-6 w-full px-4">
+                    {categoryExpenses.map((entry, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <div
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: generateColor(entry.name) }}
+                        />
+                        <span className="text-sm text-muted-foreground">{entry.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <p className="text-muted-foreground text-sm">No category data available</p>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          <Card className="rounded-2xl shadow-md border border-border">
+            <CardHeader>
+              <CardTitle className="text-xl font-semibold">Recent Transactions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="flex flex-col gap-1">
+                {recentTransactions.map((t) => (
+                  <motion.li
+                    key={t.id}
+                    className="flex justify-between items-center p-2 rounded-md hover:bg-muted transition-colors"
+                    whileHover={{ scale: 1.02 }}
+                    transition={{ type: "spring", stiffness: 300 }}
+                  >
+
+                    <span className="text-base text-muted-foreground">{t.description}</span>
+                    <span
+                      className={`text-base font-medium ${t.amount < 0 ? 'text-red-600' : 'text-green-600'
+                        }`}
+                    >
+                      ₹{Math.abs(t.amount).toFixed(2)}
+                    </span>
+                  </motion.li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          viewport={{ once: true, amount: 0.3 }}
+        >
+          <Card className="rounded-2xl shadow-md border border-border">
+            <CardHeader>
+              <CardTitle className="text-xl font-semibold">Transactions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-3 mb-6">
+                <Dialog open={openAdd} onOpenChange={setOpenAdd}>
+                  <DialogTrigger asChild>
+                    <Button className="bg-green-600 hover:bg-green-700 text-white">
+                      Add Transaction
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Add Transaction</DialogTitle>
+                    </DialogHeader>
+                    <AddTransactionForm
+                      onAddTransaction={handleAddTransaction}
+                      categories={categories}
+                    />
+                  </DialogContent>
+                </Dialog>
+
+                <Dialog open={openSetBudget} onOpenChange={setOpenSetBudget}>
+                  <DialogTrigger asChild>
+                    <Button className="bg-blue-100 text-blue-800 hover:bg-blue-200">
+                      Set Budgets
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Set Budgets</DialogTitle>
+                    </DialogHeader>
+                    <SetBudgetForm
+                      budgets={budgets}
+                      onSetBudget={handleSetBudget}
+                      categories={categories}
+                    />
+                  </DialogContent>
+                </Dialog>
+
+                <Dialog open={openAddCategory} onOpenChange={setOpenAddCategory}>
+                  <DialogTrigger asChild>
+                    <Button className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200">
+                      Add Category
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Add Category</DialogTitle>
+                    </DialogHeader>
+                    <AddCategoryForm onAddCategory={handleAddCategory} />
+                  </DialogContent>
+                </Dialog>
+              </div>
+
+              <Table className="rounded-lg overflow-hidden border">
+                <TableHeader className="bg-muted">
+                  <TableRow>
+                    <TableHead className="text-muted-foreground">Date</TableHead>
+                    <TableHead className="text-muted-foreground">Description</TableHead>
+                    <TableHead className="text-muted-foreground">Category</TableHead>
+                    <TableHead className="text-right text-muted-foreground">Amount</TableHead>
+                    <TableHead className="text-right text-muted-foreground">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {transactions.map((t) => (
+                    <motion.tr
+                      key={t.id}
+                      className="transition-transform hover:scale-[1.01] hover:shadow-sm"
+                      whileHover={{ scale: 1.01 }}
+                      transition={{ type: 'spring', stiffness: 250 }}
+                    >
+                      <TableCell>{isClient ? t.date.toLocaleDateString() : ""}</TableCell>
+                      <TableCell>{t.description}</TableCell>
+                      <TableCell>{t.category}</TableCell>
+                      <TableCell
+                        className={`text-right font-medium ${t.amount < 0 ? 'text-red-600' : 'text-green-600'
+                          }`}
+                      >
+                        ₹{Math.abs(t.amount).toFixed(2)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Dialog
+                          open={openEdit === t.id}
+                          onOpenChange={(isOpen) => setOpenEdit(isOpen ? t.id : null)}
+                        >
+                          <DialogTrigger asChild>
+                            <Button variant="outline" size="sm" className="mr-2">
+                              Edit
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Edit Transaction</DialogTitle>
+                            </DialogHeader>
+                            <EditTransactionForm
+                              transaction={t}
+                              onEditTransaction={handleEditTransaction}
+                              categories={categories}
+                            />
+                          </DialogContent>
+                        </Dialog>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDeleteTransaction(t.id)}
+                        >
+                          Delete
+                        </Button>
+                      </TableCell>
+                    </motion.tr>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </motion.div>
+        <div className="space-y-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            viewport={{ once: true, amount: 0.3 }}
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle>Monthly Expenses</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={monthlyExpenses}>
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    {categories.map((category) => (
+                      <Bar
+                        key={category}
+                        dataKey={category}
+                        stackId="a"
+                        fill={generateColor(category)}
+                      />
+                    ))}
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div
+            ref={budgetCardRef}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            viewport={{ once: true, amount: 0.3 }}
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle>Budget vs. Actual</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {budgetStatus &&
+                    budgetStatus.map((b) => (
+                      <div key={b.category}>
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center">
+                            <span>{b.category}</span>
+                            {b.progress > 100 && (
+                              <AlertTriangle className="w-4 h-4 ml-2 text-red-500" />
+                            )}
+                          </div>
+                          <span>
+                            ₹{b.expense.toFixed(2)} / ₹{b.amount.toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="w-full h-2 rounded bg-muted overflow-hidden">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: budgetInView ? `${Math.min(b.progress, 100)}%` : 0 }}
+                            transition={{ duration: 0.8 }}
+                            className="h-2 rounded"
+                            style={{ backgroundColor: generateColor(b.category) }}
+                          />
+
+                        </div>
+
+                      </div>
+                    ))}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
         </div>
       </div>
     </main>
