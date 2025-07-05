@@ -308,10 +308,13 @@ export default function Home() {
           <CardContent>
             <ul className="flex flex-col gap-1">
               {recentTransactions.map((t) => (
-                <li
+                <motion.li
                   key={t.id}
                   className="flex justify-between items-center p-2 rounded-md hover:bg-muted transition-colors"
+                  whileHover={{ scale: 1.02 }}
+                  transition={{ type: "spring", stiffness: 300 }}
                 >
+
                   <span className="text-base text-muted-foreground">{t.description}</span>
                   <span
                     className={`text-base font-medium ${t.amount < 0 ? 'text-red-600' : 'text-green-600'
@@ -319,7 +322,7 @@ export default function Home() {
                   >
                     ₹{Math.abs(t.amount).toFixed(2)}
                   </span>
-                </li>
+                </motion.li>
               ))}
             </ul>
           </CardContent>
@@ -395,7 +398,12 @@ export default function Home() {
               </TableHeader>
               <TableBody>
                 {transactions.map((t) => (
-                  <TableRow key={t.id}>
+                  <motion.tr
+                    key={t.id}
+                    className="transition-transform hover:scale-[1.01] hover:shadow-sm"
+                    whileHover={{ scale: 1.01 }}
+                    transition={{ type: 'spring', stiffness: 250 }}
+                  >
                     <TableCell>{isClient ? t.date.toLocaleDateString() : ""}</TableCell>
                     <TableCell>{t.description}</TableCell>
                     <TableCell>{t.category}</TableCell>
@@ -434,7 +442,7 @@ export default function Home() {
                         Delete
                       </Button>
                     </TableCell>
-                  </TableRow>
+                  </motion.tr>
                 ))}
               </TableBody>
             </Table>
