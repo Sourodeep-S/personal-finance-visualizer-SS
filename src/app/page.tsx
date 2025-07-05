@@ -1,6 +1,6 @@
 "use client";
 
-//import { motion } from "framer-motion"
+import { motion } from "framer-motion"
 
 import { useState, useEffect } from "react";
 import { generateColor } from "@/lib/colors";
@@ -26,7 +26,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Progress } from "@/components/ui/progress";
+// import { Progress } from "@/components/ui/progress";
 import {
   transactions as initialTransactions,
   Transaction,
@@ -485,12 +485,16 @@ export default function Home() {
                           ₹{b.expense.toFixed(2)} / ₹{b.amount.toFixed(2)}
                         </span>
                       </div>
-                      <Progress
-                        value={b.progress}
-                        style={{
-                          backgroundColor: generateColor(b.category),
-                        }}
-                      />
+                      <div className="w-full h-2 rounded bg-muted overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${Math.min(b.progress, 100)}%` }}
+                          transition={{ duration: 0.8 }}
+                          className="h-2 rounded"
+                          style={{ backgroundColor: generateColor(b.category) }}
+                        />
+                      </div>
+
                     </div>
                   ))}
               </div>
