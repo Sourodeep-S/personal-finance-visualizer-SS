@@ -339,13 +339,16 @@ export default function Home() {
                     transition={{ type: "spring", stiffness: 300 }}
                   >
 
-                    <span className="text-base text-muted-foreground">{t.description}</span>
+                    <div className="flex flex-col">
+                      <span className="text-base">{t.description}</span>
+                      <span className="text-xs text-gray-400">{t.date.toLocaleDateString()}</span>
+                    </div>
                     <span
-                      className={`text-base font-medium ${t.amount < 0 ? 'text-red-600' : 'text-green-600'
-                        }`}
+                      className={`text-base font-medium ${t.amount < 0 ? 'text-red-600' : 'text-green-600'}`}
                     >
                       ₹{Math.abs(t.amount).toFixed(2)}
                     </span>
+
                   </motion.li>
                 ))}
               </ul>
@@ -499,15 +502,19 @@ export default function Home() {
                     <YAxis />
                     <Tooltip />
                     <Legend />
-                    {categories.map((category) => (
+                    {categories.map((category, index) => (
                       <Bar
                         key={category}
                         dataKey={category}
                         stackId="a"
                         fill={generateColor(category)}
+                        isAnimationActive={true}
+                        animationDuration={800}
+                        animationBegin={index * 100} // staggered animation for each category
                       />
                     ))}
                   </BarChart>
+
                 </ResponsiveContainer>
               </CardContent>
             </Card>
@@ -544,7 +551,7 @@ export default function Home() {
                           <motion.div
                             initial={{ width: 0 }}
                             animate={{ width: budgetInView ? `${Math.min(b.progress, 100)}%` : 0 }}
-                            transition={{ duration: 0.8 }}
+                            transition={{ duration: 1.5 }}
                             className="h-2 rounded"
                             style={{ backgroundColor: generateColor(b.category) }}
                           />
